@@ -43,5 +43,4 @@ python -u run_multitask_unified_pretraining.py \
   --warmup_steps 2500 \
   --max_steps 100000 \
   --logging_steps 1000 \
-  --fp16 \
   --overwrite_output_dir 2>&1 | tee $outpath/run.log
