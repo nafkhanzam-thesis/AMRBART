@@ -1,12 +1,26 @@
 # coding:utf-8
 import os
 import torch
+import pickle
 from datasets import load_dataset
 from dataclasses import dataclass
 from transformers.file_utils import PaddingStrategy
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding, PreTrainedTokenizerBase
 from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
+
+
+def read_or_new_pickle(path, default_fn):
+    if os.path.isfile(path):
+        with open(path, "rb") as f:
+            try:
+                return pickle.load(f)
+            except Exception as e:  # so many things could go wrong, can't be more specific.
+                print(e)
+    default = default_fn()
+    with open(path, "wb") as f:
+        pickle.dump(default, f)
+    return default
 
 
 class AMRDataSet(torch.nn.Module):
@@ -39,7 +53,8 @@ class AMRDataSet(torch.nn.Module):
         data_files["validation"] = self.validation_file
         data_files["test"] = self.test_file
 
-        datasets = load_dataset(f"{os.path.dirname(__file__)}/amrdata.py", data_files=data_files, keep_in_memory=True)
+        datasets = load_dataset(
+            f"{os.path.dirname(__file__)}/amrdata.py", data_files=data_files, keep_in_memory=True)
         print("datasets:", datasets)
         column_names = datasets["train"].column_names
         print("colums:", column_names)
@@ -54,14 +69,15 @@ class AMRDataSet(torch.nn.Module):
             model_inputs = self.tokenizer(
                 sents, max_length=self.max_src_length, padding=False, truncation=True
             )
-            amr_ids = [self.tokenizer.tokenize_amr(itm.split())[:self.max_src_length - 1] + [self.tokenizer.amr_eos_token_id] for itm in amrs]
+            amr_ids = [self.tokenizer.tokenize_amr(itm.split())[
+                :self.max_src_length - 1] + [self.tokenizer.amr_eos_token_id] for itm in amrs]
             model_inputs["labels"] = amr_ids
-            
+
             joint_ids = [
                 srci + [self.tokenizer.amr_bos_token_id] + tgti
                 for srci, tgti in zip(model_inputs["input_ids"], model_inputs["labels"])
             ]  # [<s> x1,x2...,xn </s> <AMR> y1,y2,...ym </AMR>]
-            
+
             max_src_length = min(self.max_src_length * 2, 512)
             joint_ids = [
                 itm[:max_src_length - 1] + [self.tokenizer.amr_eos_token_id]
@@ -70,7 +86,8 @@ class AMRDataSet(torch.nn.Module):
                 for itm in joint_ids
             ]
             seg_ids = [
-                [0 for _ in range(len(srci))] + [1 for _ in range(len(tgti) + 1)]
+                [0 for _ in range(len(srci))] +
+                [1 for _ in range(len(tgti) + 1)]
                 for srci, tgti in zip(model_inputs["input_ids"], model_inputs["labels"])
             ]  # [0,0,...,0,1,1,...1]
             seg_ids = [itm[:max_src_length] for itm in seg_ids]
@@ -128,18 +145,18 @@ class AMRDataSet(torch.nn.Module):
             model_inputs["Esrctgt_segids"] = Esrctgt_segids
             return model_inputs
 
-        self.train_dataset = datasets["train"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=8
-        )
+        self.train_dataset = read_or_new_pickle(".cache/mbart-pre-train-train_dataset.pkl", lambda: datasets["train"].map(
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+        ))
         print(f"ALL {len(self.train_dataset)} training instances")
-        self.valid_dataset = datasets["validation"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=8
-        )
+        self.valid_dataset = read_or_new_pickle(".cache/mbart-pre-train-valid_dataset.pkl", lambda: datasets["validation"].map(
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+        ))
         print(f"ALL {len(self.valid_dataset)} validation instances")
 
-        self.test_dataset = datasets["test"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=8
-        )
+        self.test_dataset = read_or_new_pickle(".cache/mbart-pre-train-test_dataset.pkl", lambda: datasets["test"].map(
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+        ))
         print(f"ALL {len(self.test_dataset)} test instances")
 
         print("Dataset Instance Example:", self.train_dataset[0])
@@ -151,7 +168,8 @@ def padding_func(features, padding_side="right", pad_token_id=1, key="label"):
     for feature in features:
         remainder = [pad_token_id] * (max_label_length - len(feature[key]))
         feature[key] = (
-            feature[key] + remainder if padding_side == "right" else remainder + feature[key]
+            feature[key] +
+            remainder if padding_side == "right" else remainder + feature[key]
         )
     return
 
@@ -247,7 +265,7 @@ class DataCollatorForSeq2Seq:
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors="pt",
         )
-        
+
         return {
             "input_ids": features["input_ids"],
             "labels": features["labels"],

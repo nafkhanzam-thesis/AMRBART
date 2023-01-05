@@ -1,4 +1,4 @@
-### THIS FILE IS COPIED FROM THE HUGGINGFACE REPOSITORY FOR CONVENIENCE.
+# THIS FILE IS COPIED FROM THE HUGGINGFACE REPOSITORY FOR CONVENIENCE.
 
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
@@ -22,6 +22,13 @@ GPT and GPT-2 are fine-tuned using a causal language modeling (CLM) loss while B
 using a masked language modeling (MLM) loss.
 """
 
+from transformers import (
+    WEIGHTS_NAME,
+    AdamW,
+    AutoConfig,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
 import argparse
 import glob
 import logging
@@ -32,7 +39,7 @@ import re
 import shutil
 from typing import Dict, List, Any, Tuple
 from data_interface.dataset import AMRDataSet, DataCollatorForSeq2Seq
-from model_interface.modeling_bart import BartForConditionalGeneration
+from model_interface.modeling_bart import MBartForConditionalGeneration as BartForConditionalGeneration
 from model_interface.tokenization_bart import AMRBartTokenizer
 
 import numpy as np
@@ -51,14 +58,9 @@ from common.utils import (
     save_dummy_batch,
 )
 
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
-from transformers import (
-    WEIGHTS_NAME,
-    AdamW,
-    AutoConfig,
-    PreTrainedModel,
-    PreTrainedTokenizer,
-)
+#! Change again later
+# os.environ["TOKENIZERS_PARALLELISM"] = "true"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # from transformers.modeling_auto import MODEL_WITH_LM_HEAD_MAPPING
 
@@ -99,15 +101,18 @@ def set_seed(args):
 def _sorted_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -> List[str]:
     ordering_and_checkpoint_path = []
 
-    glob_checkpoints = glob.glob(os.path.join(args.output_dir, "{}-*".format(checkpoint_prefix)))
+    glob_checkpoints = glob.glob(os.path.join(
+        args.output_dir, "{}-*".format(checkpoint_prefix)))
 
     for path in glob_checkpoints:
         if use_mtime:
             ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
         else:
-            regex_match = re.match(".*{}-([0-9]+)".format(checkpoint_prefix), path)
+            regex_match = re.match(
+                ".*{}-([0-9]+)".format(checkpoint_prefix), path)
             if regex_match and regex_match.groups():
-                ordering_and_checkpoint_path.append((int(regex_match.groups()[0]), path))
+                ordering_and_checkpoint_path.append(
+                    (int(regex_match.groups()[0]), path))
 
     checkpoints_sorted = sorted(ordering_and_checkpoint_path)
     checkpoints_sorted = [checkpoint[1] for checkpoint in checkpoints_sorted]
@@ -121,15 +126,18 @@ def _rotate_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
         return
 
     # Check if we should delete older checkpoint(s)
-    checkpoints_sorted = _sorted_checkpoints(args, checkpoint_prefix, use_mtime)
+    checkpoints_sorted = _sorted_checkpoints(
+        args, checkpoint_prefix, use_mtime)
     if len(checkpoints_sorted) <= args.save_total_limit:
         return
 
-    number_of_checkpoints_to_delete = max(0, len(checkpoints_sorted) - args.save_total_limit)
+    number_of_checkpoints_to_delete = max(
+        0, len(checkpoints_sorted) - args.save_total_limit)
     checkpoints_to_be_deleted = checkpoints_sorted[:number_of_checkpoints_to_delete]
     for checkpoint in checkpoints_to_be_deleted:
         logger.info(
-            "Deleting older checkpoint [{}] due to args.save_total_limit".format(checkpoint)
+            "Deleting older checkpoint [{}] due to args.save_total_limit".format(
+                checkpoint)
         )
         shutil.rmtree(checkpoint)
 
@@ -150,7 +158,8 @@ def train(
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
 
     train_sampler = (
-        RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
+        RandomSampler(train_dataset) if args.local_rank == -
+        1 else DistributedSampler(train_dataset)
     )
     train_dataloader = DataLoader(
         train_dataset,
@@ -163,10 +172,12 @@ def train(
     if args.max_steps > 0:
         t_total = args.max_steps
         args.num_train_epochs = (
-            args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
+            args.max_steps // (len(train_dataloader) //
+                               args.gradient_accumulation_steps) + 1
         )
     else:
-        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+        t_total = len(
+            train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
     model = (
         model.module if hasattr(model, "module") else model
@@ -187,7 +198,8 @@ def train(
             "weight_decay": 0.0,
         },
     ]
-    optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
+    optimizer = AdamW(optimizer_grouped_parameters,
+                      lr=args.learning_rate, eps=args.adam_epsilon)
     # scheduler = get_linear_schedule_with_warmup(
     #     optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total
     # )
@@ -202,8 +214,10 @@ def train(
         and os.path.isfile(os.path.join(args.model_name_or_path, "scheduler.pt"))
     ):
         # Load in optimizer and scheduler states
-        optimizer.load_state_dict(torch.load(os.path.join(args.model_name_or_path, "optimizer.pt")))
-        scheduler.load_state_dict(torch.load(os.path.join(args.model_name_or_path, "scheduler.pt")))
+        optimizer.load_state_dict(torch.load(
+            os.path.join(args.model_name_or_path, "optimizer.pt")))
+        scheduler.load_state_dict(torch.load(
+            os.path.join(args.model_name_or_path, "scheduler.pt")))
 
     if args.fp16:
         try:
@@ -212,7 +226,8 @@ def train(
             raise ImportError(
                 "Please install apex from https://www.github.com/nvidia/apex to use fp16 training."
             )
-        model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
+        model, optimizer = amp.initialize(
+            model, optimizer, opt_level=args.fp16_opt_level)
 
     # multi-gpu training (should be after apex fp16 initialization)
     if args.n_gpu > 1:
@@ -231,14 +246,16 @@ def train(
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.num_train_epochs)
-    logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
+    logger.info("  Instantaneous batch size per GPU = %d",
+                args.per_gpu_train_batch_size)
     logger.info(
         "  Total train batch size (w. parallel, distributed & accumulation) = %d",
         args.train_batch_size
         * args.gradient_accumulation_steps
         * (torch.distributed.get_world_size() if args.local_rank != -1 else 1),
     )
-    logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
+    logger.info("  Gradient Accumulation steps = %d",
+                args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
     global_step = 0
@@ -250,7 +267,8 @@ def train(
     if args.model_name_or_path and os.path.exists(args.model_name_or_path):
         try:
             # set global_step to gobal_step of last saved checkpoint from model path
-            checkpoint_suffix = args.model_name_or_path.split("-")[-1].split("/")[0]
+            checkpoint_suffix = args.model_name_or_path.split(
+                "-")[-1].split("/")[0]
             global_step = int(checkpoint_suffix)
             epochs_trained = global_step // (
                 len(train_dataloader) // args.gradient_accumulation_steps
@@ -259,9 +277,11 @@ def train(
                 len(train_dataloader) // args.gradient_accumulation_steps
             )
 
-            logger.info("  Continuing training from checkpoint, will skip to saved global_step")
+            logger.info(
+                "  Continuing training from checkpoint, will skip to saved global_step")
             logger.info("  Continuing training from epoch %d", epochs_trained)
-            logger.info("  Continuing training from global step %d", global_step)
+            logger.info(
+                "  Continuing training from global step %d", global_step)
             logger.info(
                 "  Will skip the first %d steps in the first epoch", steps_trained_in_current_epoch
             )
@@ -319,7 +339,8 @@ def train(
                     decoder_input_ids=dec_input,
                     labels=labels,
                 )
-                amr_loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+                # model outputs are always tuple in transformers (see doc)
+                amr_loss = outputs[0]
             else:
                 amr_loss = 0
 
@@ -341,7 +362,8 @@ def train(
                     decoder_input_ids=dec_input,
                     labels=labels,
                 )
-                text_loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+                # model outputs are always tuple in transformers (see doc)
+                text_loss = outputs[0]
             else:
                 text_loss = 0
 
@@ -508,7 +530,8 @@ def train(
             #         fisher_loss += fisher_loss_p.sum()
             # epoch_iterator.set_postfix(lm_loss=loss.item(), fisher_loss=fisher_loss.item(), lr=scheduler.get_lr()[0])
             # loss += fisher_loss
-            epoch_iterator.set_postfix(lm_loss=loss.item(), lr=scheduler.get_lr()[0])
+            epoch_iterator.set_postfix(
+                lm_loss=loss.item(), lr=scheduler.get_lr()[0])
 
             if args.fp16:
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -523,9 +546,11 @@ def train(
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 if args.fp16:
-                    torch.nn.utils.clip_grad_norm_(amp.master_params(optimizer), args.max_grad_norm)
+                    torch.nn.utils.clip_grad_norm_(
+                        amp.master_params(optimizer), args.max_grad_norm)
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
@@ -551,17 +576,21 @@ def train(
                             # Save model checkpoint
                             output_dir = os.path.join(
                                 args.output_dir,
-                                "{}-{}-{:.3f}".format(checkpoint_prefix, global_step, best_score),
+                                "{}-{}-{:.3f}".format(checkpoint_prefix,
+                                                      global_step, best_score),
                             )
                             os.makedirs(output_dir, exist_ok=True)
                             model_to_save = (
-                                model.module if hasattr(model, "module") else model
+                                model.module if hasattr(
+                                    model, "module") else model
                             )  # Take care of distributed/parallel training
                             model_to_save.save_pretrained(output_dir)
                             tokenizer.save_pretrained(output_dir)
 
-                            torch.save(args, os.path.join(output_dir, "training_args.bin"))
-                            logger.info("Saving model checkpoint to %s", output_dir)
+                            torch.save(args, os.path.join(
+                                output_dir, "training_args.bin"))
+                            logger.info(
+                                "Saving model checkpoint to %s", output_dir)
 
                             _rotate_checkpoints(args, checkpoint_prefix)
 
@@ -571,13 +600,17 @@ def train(
                             torch.save(
                                 scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt")
                             )
-                            logger.info("Saving optimizer and scheduler states to %s", output_dir)
+                            logger.info(
+                                "Saving optimizer and scheduler states to %s", output_dir)
 
                         for key, value in results.items():
-                            tb_writer.add_scalar("eval_{}".format(key), value, global_step)
-                    tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
+                            tb_writer.add_scalar(
+                                "eval_{}".format(key), value, global_step)
                     tb_writer.add_scalar(
-                        "loss", (tr_loss - logging_loss) / args.logging_steps, global_step
+                        "lr", scheduler.get_lr()[0], global_step)
+                    tb_writer.add_scalar(
+                        "loss", (tr_loss - logging_loss) /
+                        args.logging_steps, global_step
                     )
                     # tb_writer.add_scalar(
                     #     "fisher_loss",
@@ -592,12 +625,14 @@ def train(
                 break
 
         if args.max_steps > 0 and global_step > args.max_steps:
-            results = evaluate(args, eval_dataset, collate_fn, model, tokenizer, config=config)
+            results = evaluate(args, eval_dataset, collate_fn,
+                               model, tokenizer, config=config)
             cur_score = results["perplexity"].item()
             checkpoint_prefix = "checkpoint"
             # Save model checkpoint
             output_dir = os.path.join(
-                args.output_dir, "{}-last-{:.3f}".format(checkpoint_prefix, cur_score),
+                args.output_dir, "{}-last-{:.3f}".format(
+                    checkpoint_prefix, cur_score),
             )
             os.makedirs(output_dir, exist_ok=True)
             model_to_save = (
@@ -608,7 +643,7 @@ def train(
             logger.info("Saving model checkpoint to %s", output_dir)
             train_iterator.close()
             break
-        
+
         checkpoint_prefix = "checkpoint"
         output_dir = os.path.join(
             args.output_dir, "{}-last-epoch".format(checkpoint_prefix),
@@ -621,7 +656,8 @@ def train(
         tokenizer.save_pretrained(output_dir)
         logger.info("Saving model checkpoint to %s", output_dir)
         avg_epoch_loss = epoch_loss / epoch_step
-        logger.info("\nEpoch End... \navg_train_loss = %s", str(avg_epoch_loss))
+        logger.info("\nEpoch End... \navg_train_loss = %s",
+                    str(avg_epoch_loss))
 
     if args.local_rank in [-1, 0]:
         tb_writer.close()
@@ -687,7 +723,8 @@ def evaluate(
                     decoder_input_ids=dec_input,
                     labels=labels,
                 )
-                amr_loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+                # model outputs are always tuple in transformers (see doc)
+                amr_loss = outputs[0]
             else:
                 amr_loss = 0
 
@@ -707,7 +744,8 @@ def evaluate(
                     decoder_input_ids=dec_input,
                     labels=labels,
                 )
-                text_loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
+                # model outputs are always tuple in transformers (see doc)
+                text_loss = outputs[0]
             else:
                 text_loss = 0
 
@@ -821,7 +859,8 @@ def evaluate(
 
     result = {"perplexity": perplexity, "eval_loss": eval_loss}
 
-    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+    output_eval_file = os.path.join(
+        eval_output_dir, prefix, "eval_results.txt")
     with open(output_eval_file, "a") as writer:
         logger.info("\n***** Eval results {} *****".format(prefix))
         for key in sorted(result.keys()):
@@ -924,7 +963,8 @@ def main():
         "The training dataset will be truncated in block of this size for training."
         "Default to the model max input length for single sentence inputs (take into account special tokens).",
     )
-    parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
+    parser.add_argument("--do_train", action="store_true",
+                        help="Whether to run training.")
     parser.add_argument(
         "--do_eval", action="store_true", help="Whether to run eval on the dev set."
     )
@@ -961,7 +1001,8 @@ def main():
     parser.add_argument(
         "--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer."
     )
-    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
+    parser.add_argument("--max_grad_norm", default=1.0,
+                        type=float, help="Max gradient norm.")
     parser.add_argument(
         "--num_train_epochs",
         default=1.0,
@@ -984,7 +1025,8 @@ def main():
         "--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps."
     )
 
-    parser.add_argument("--logging_steps", type=int, default=500, help="Log every X updates steps.")
+    parser.add_argument("--logging_steps", type=int,
+                        default=500, help="Log every X updates steps.")
     parser.add_argument(
         "--save_steps", type=int, default=500, help="Save checkpoint every X updates steps."
     )
@@ -999,7 +1041,8 @@ def main():
         action="store_true",
         help="Evaluate all checkpoints starting with the same prefix as model_name_or_path ending and ending with step number",
     )
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
+    parser.add_argument("--no_cuda", action="store_true",
+                        help="Avoid using CUDA when available")
     parser.add_argument(
         "--overwrite_output_dir",
         action="store_true",
@@ -1010,7 +1053,8 @@ def main():
         action="store_true",
         help="Overwrite the cached training and evaluation sets",
     )
-    parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="random seed for initialization")
 
     parser.add_argument(
         "--fp16",
@@ -1027,8 +1071,10 @@ def main():
     parser.add_argument(
         "--local_rank", type=int, default=-1, help="For distributed training: local_rank"
     )
-    parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
-    parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
+    parser.add_argument("--server_ip", type=str, default="",
+                        help="For distant debugging.")
+    parser.add_argument("--server_port", type=str,
+                        default="", help="For distant debugging.")
     parser.add_argument(
         "--smart_init",
         action="store_true",
@@ -1106,7 +1152,8 @@ def main():
     if args.should_continue:
         sorted_checkpoints = _sorted_checkpoints(args)
         if len(sorted_checkpoints) == 0:
-            raise ValueError("Used --should_continue but no checkpoint was found in --output_dir.")
+            raise ValueError(
+                "Used --should_continue but no checkpoint was found in --output_dir.")
         else:
             args.model_name_or_path = sorted_checkpoints[-1]
 
@@ -1125,7 +1172,8 @@ def main():
 
     # Setup CUDA, GPU & distributed training
     if args.local_rank == -1 or args.no_cuda:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+        device = torch.device(
+            "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
     else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.cuda.set_device(args.local_rank)
@@ -1154,12 +1202,15 @@ def main():
 
     # Load pretrained model and tokenizer
     if args.local_rank not in [-1, 0]:
-        torch.distributed.barrier()  # Barrier to make sure only the first process in distributed training download model & vocab
+        # Barrier to make sure only the first process in distributed training download model & vocab
+        torch.distributed.barrier()
 
     if args.config_name:
-        config = AutoConfig.from_pretrained(args.config_name, cache_dir=args.cache_dir)
+        config = AutoConfig.from_pretrained(
+            args.config_name, cache_dir=args.cache_dir)
     elif args.model_name_or_path:
-        config = AutoConfig.from_pretrained(args.model_name_or_path, cache_dir=args.cache_dir)
+        config = AutoConfig.from_pretrained(
+            args.model_name_or_path, cache_dir=args.cache_dir)
     else:
         # When we release a pip version exposing CONFIG_MAPPING,
         # we can do `config = CONFIG_MAPPING[args.model_type]()`.
@@ -1190,7 +1241,7 @@ def main():
 
     model.resize_token_embeddings(len(tokenizer))
     model.to(args.device)
-    
+
     print(model)
     train_p = [
         n for n, p in model.named_parameters() if p.requires_grad
@@ -1198,7 +1249,8 @@ def main():
     print(f"Trainable params in Summarization Model : {train_p}")
 
     if args.local_rank == 0:
-        torch.distributed.barrier()  # End of barrier to make sure only the first process in distributed training download model & vocab
+        # End of barrier to make sure only the first process in distributed training download model & vocab
+        torch.distributed.barrier()
 
     logger.info("Training/evaluation parameters %s", args)
 
@@ -1227,7 +1279,8 @@ def main():
     # Training
     if args.do_train:
         if args.local_rank not in [-1, 0]:
-            torch.distributed.barrier()  # Barrier to make sure only the first process in distributed training process the dataset, and the others will use the cache
+            # Barrier to make sure only the first process in distributed training process the dataset, and the others will use the cache
+            torch.distributed.barrier()
 
         if args.local_rank == 0:
             torch.distributed.barrier()
@@ -1235,8 +1288,10 @@ def main():
         global_step, tr_loss = train(
             args, train_dataset, dev_dataset, seq2seq_collate_fn, model, tokenizer, config
         )
-        logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
-        args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
+        logger.info(" global_step = %s, average loss = %s",
+                    global_step, tr_loss)
+        args.train_batch_size = args.per_gpu_train_batch_size * \
+            max(1, args.n_gpu)
 
     # Saving best-practices: if you use save_pretrained for the model and tokenizer, you can reload them using from_pretrained()
     if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
@@ -1275,8 +1330,10 @@ def main():
             )  # Reduce logging
         logger.info("Evaluate the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
-            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
-            prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
+            global_step = checkpoint.split(
+                "-")[-1] if len(checkpoints) > 1 else ""
+            prefix = checkpoint.split(
+                "/")[-1] if checkpoint.find("checkpoint") != -1 else ""
 
             model = BartForConditionalGeneration.from_pretrained(checkpoint)
             model.to(args.device)
@@ -1289,7 +1346,8 @@ def main():
                 config=config,
                 prefix=prefix,
             )
-            result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
+            result = dict((k + "_{}".format(global_step), v)
+                          for k, v in result.items())
             results.update(result)
 
     return results

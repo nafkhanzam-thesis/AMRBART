@@ -1,7 +1,7 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset="xl-amr-id"
+dataset="amrbart"
 datapath="../../datasets/$dataset"
 MODELROOT="../models"
 MODEL="$MODELROOT/bart-base"

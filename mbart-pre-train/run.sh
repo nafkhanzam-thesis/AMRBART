@@ -1,7 +1,7 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset="xl-amr-id"
+dataset="amrbart"
 datapath="../../datasets/$dataset"
 MODELROOT="../models"
 MODEL="$MODELROOT/mbart-large-50"
@@ -43,5 +43,4 @@ python -u run_multitask_unified_pretraining.py \
   --warmup_steps 2500 \
   --max_steps 100000 \
   --logging_steps 1000 \
-  --fp16 \
   --overwrite_output_dir 2>&1 | tee $outpath/run.log
