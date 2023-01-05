@@ -29,8 +29,8 @@ python -u run_multitask_unified_pretraining.py \
   --mlm_joint_to_amr \
   --mlm_joint_to_text \
   --block_size 512 \
-  --per_gpu_train_batch_size 8 \
-  --gradient_accumulation_steps 8 \
+  --per_gpu_train_batch_size 4 \
+  --gradient_accumulation_steps 4 \
   --model_type $MODEL \
   --model_name_or_path $MODEL \
   --save_total_limit 2 \

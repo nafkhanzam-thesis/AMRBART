@@ -46,6 +46,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
+from torch.cuda.amp import autocast
 from tqdm import tqdm, trange
 from common.utils import (
     get_STD2partial,
@@ -219,15 +220,15 @@ def train(
         scheduler.load_state_dict(torch.load(
             os.path.join(args.model_name_or_path, "scheduler.pt")))
 
-    if args.fp16:
-        try:
-            from apex import amp
-        except ImportError:
-            raise ImportError(
-                "Please install apex from https://www.github.com/nvidia/apex to use fp16 training."
-            )
-        model, optimizer = amp.initialize(
-            model, optimizer, opt_level=args.fp16_opt_level)
+    # if args.fp16:
+    #     try:
+    #         from apex import amp
+    #     except ImportError:
+    #         raise ImportError(
+    #             "Please install apex from https://www.github.com/nvidia/apex to use fp16 training."
+    #         )
+    #     model, optimizer = amp.initialize(
+    #         model, optimizer, opt_level=args.fp16_opt_level)
 
     # multi-gpu training (should be after apex fp16 initialization)
     if args.n_gpu > 1:
@@ -544,7 +545,8 @@ def train(
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
-                loss.backward()
+                with autocast(device_type='cuda', dtype=torch.float16):
+                    loss.backward()
 
             epoch_step += 1
             tr_loss += loss.item()
@@ -556,8 +558,9 @@ def train(
                     torch.nn.utils.clip_grad_norm_(
                         amp.master_params(optimizer), args.max_grad_norm)
                 else:
-                    torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), args.max_grad_norm)
+                    with autocast(device_type='cuda', dtype=torch.float16):
+                        torch.nn.utils.clip_grad_norm_(
+                            model.parameters(), args.max_grad_norm)
                 optimizer.step()
                 scheduler.step()  # Update learning rate schedule
                 model.zero_grad()
@@ -1280,7 +1283,8 @@ def main():
         tokenizer,
         model=model,
         label_pad_token_id=-100,
-        pad_to_multiple_of=8 if args.fp16 else None,
+        # pad_to_multiple_of=8 if args.fp16 else None,
+        pad_to_multiple_of=8,
     )
 
     # Training
