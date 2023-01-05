@@ -149,16 +149,16 @@ class AMRDataSet(torch.nn.Module):
             os.makedirs('.cache')
 
         self.train_dataset = read_or_new_pickle(".cache/mbart-pre-train-train_dataset.pkl", lambda: datasets["train"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
         ))
         print(f"ALL {len(self.train_dataset)} training instances")
         self.valid_dataset = read_or_new_pickle(".cache/mbart-pre-train-valid_dataset.pkl", lambda: datasets["validation"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
         ))
         print(f"ALL {len(self.valid_dataset)} validation instances")
 
         self.test_dataset = read_or_new_pickle(".cache/mbart-pre-train-test_dataset.pkl", lambda: datasets["test"].map(
-            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
+            tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
         ))
         print(f"ALL {len(self.test_dataset)} test instances")
 

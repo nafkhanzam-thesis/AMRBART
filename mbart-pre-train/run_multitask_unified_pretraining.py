@@ -326,6 +326,7 @@ def train(
                 )
 
                 masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
                 dec_input = dec_input.to(args.device)
 
@@ -350,6 +351,7 @@ def train(
                 )
 
                 masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
                 dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
@@ -374,6 +376,7 @@ def train(
                         batch, tokenizer, inp="text", mlm_prob=mlm_prob
                     )
                     masked_input = masked_input.to(args.device)
+                    attention_mask = attention_mask.to(args.device)
                     labels = labels.to(args.device)
                     dec_input = dec_input.to(args.device)
                     if step == 0 and epoch == 0:
@@ -404,6 +407,7 @@ def train(
                         batch, tokenizer, inp="amr", mlm_prob=mlm_prob
                     )
                     masked_input = masked_input.to(args.device)
+                    attention_mask = attention_mask.to(args.device)
                     labels = labels.to(args.device)
                     dec_input = dec_input.to(args.device)
                     if step == 0 and epoch == 0:
@@ -434,6 +438,7 @@ def train(
                     batch, tokenizer, inp="text", mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
                 dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
@@ -461,6 +466,7 @@ def train(
                     batch, tokenizer, inp="amr", mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
                 dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
@@ -484,6 +490,7 @@ def train(
                     batch, tokenizer, mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
                 dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
