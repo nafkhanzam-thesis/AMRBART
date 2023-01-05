@@ -545,7 +545,7 @@ def train(
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
-                with autocast(device_type='cuda', dtype=torch.float16):
+                with autocast(dtype=torch.float16):
                     loss.backward()
 
             epoch_step += 1
@@ -558,7 +558,7 @@ def train(
                     torch.nn.utils.clip_grad_norm_(
                         amp.master_params(optimizer), args.max_grad_norm)
                 else:
-                    with autocast(device_type='cuda', dtype=torch.float16):
+                    with autocast(dtype=torch.float16):
                         torch.nn.utils.clip_grad_norm_(
                             model.parameters(), args.max_grad_norm)
                 optimizer.step()
@@ -725,6 +725,7 @@ def evaluate(
                 )
 
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -746,6 +747,7 @@ def evaluate(
                 )
 
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -765,6 +767,7 @@ def evaluate(
                     batch, tokenizer, inp="text"
                 )
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -783,6 +786,7 @@ def evaluate(
                     batch, tokenizer, inp="amr"
                 )
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -801,6 +805,7 @@ def evaluate(
                     batch, tokenizer, inp="text", mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -819,6 +824,7 @@ def evaluate(
                     batch, tokenizer, inp="amr", mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
@@ -837,6 +843,7 @@ def evaluate(
                     batch, tokenizer, mlm_prob=mlm_prob
                 )
                 masked_input = masked_input.to("cuda:0")
+                attention_mask = attention_mask.to("cuda:0")
                 labels = labels.to("cuda:0")
                 dec_input = dec_input.to("cuda:0")
                 outputs = model(
