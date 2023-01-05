@@ -145,6 +145,9 @@ class AMRDataSet(torch.nn.Module):
             model_inputs["Esrctgt_segids"] = Esrctgt_segids
             return model_inputs
 
+        if not os.path.exists('.cache'):
+            os.makedirs('.cache')
+
         self.train_dataset = read_or_new_pickle(".cache/mbart-pre-train-train_dataset.pkl", lambda: datasets["train"].map(
             tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=4
         ))
