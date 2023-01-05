@@ -167,7 +167,7 @@ def train(
         sampler=train_sampler,
         batch_size=args.train_batch_size,
         collate_fn=collate_fn,
-        num_workers=6,
+        num_workers=1,
     )
 
     if args.max_steps > 0:
@@ -258,6 +258,8 @@ def train(
     logger.info("  Gradient Accumulation steps = %d",
                 args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
+
+    print(args)
 
     global_step = 0
     epochs_trained = 0
@@ -1259,11 +1261,11 @@ def main():
     model.resize_token_embeddings(len(tokenizer))
     model.to(args.device)
 
-    print(model)
-    train_p = [
-        n for n, p in model.named_parameters() if p.requires_grad
-    ]  # get the trainable params
-    print(f"Trainable params in Summarization Model : {train_p}")
+    # print(model)
+    # train_p = [
+    #     n for n, p in model.named_parameters() if p.requires_grad
+    # ]  # get the trainable params
+    # print(f"Trainable params in Summarization Model : {train_p}")
 
     if args.local_rank == 0:
         # End of barrier to make sure only the first process in distributed training download model & vocab
