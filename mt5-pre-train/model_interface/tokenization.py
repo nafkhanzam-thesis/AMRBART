@@ -57,13 +57,13 @@ class AMRTokenizer(TargetTokenizer):
         self.modified = len(tokens)
         #~
 
+        self.encoder = super().get_vocab()
+
         self.amr_bos_token = "<AMR>"
         self.amr_bos_token_id = self.encoder[self.amr_bos_token]
         self.amr_eos_token = "</AMR>"
         self.amr_eos_token_id = self.encoder[self.amr_eos_token]
         print(f"Added {self.modified} AMR tokens")
-
-        self.encoder = super().get_vocab()
 
     def _tokenize(self, text):
         """ Tokenize a string. Modified in order to handle sentences with recategorization pointers"""
