@@ -2,16 +2,14 @@
 
 export CUDA_VISIBLE_DEVICES=0
 dataset="amrbart"
-MODEL_NAME=$1
+MODEL=$1
 
 datapath="../../datasets/$dataset"
-MODELROOT="../models"
-MODEL="$MODELROOT/$MODEL_NAME"
 interval=1
 
 lr=5e-5
 
-outpath=../outputs/${dataset}-${MODEL_NAME}-Unifiedtextinf-JointDenoise-6task-${lr}-AMREOS
+outpath=../outputs/${dataset}-$(echo $MODEL | sed -r 's/\//-/g')-Unifiedtextinf-JointDenoise-6task-${lr}-AMREOS
 
 mkdir -p $outpath
 echo "OutputDir: $outpath"
