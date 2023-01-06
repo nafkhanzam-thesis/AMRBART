@@ -2,7 +2,7 @@
 
 export CUDA_VISIBLE_DEVICES=0
 dataset="amrbart"
-MODEL_NAME="mt5-base"
+MODEL_NAME=$1
 
 datapath="../../datasets/$dataset"
 MODELROOT="../models"
