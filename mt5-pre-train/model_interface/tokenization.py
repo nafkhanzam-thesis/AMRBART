@@ -87,11 +87,13 @@ class AMRTokenizer(TargetTokenizer):
         if len(recats) == 2 and recats[0] in self.recategorizations and ('_' + recats[1]) in self.encoder:
             tokk.extend([self.INIT + recats[0], '_' + recats[1]])
         else:
-            for tok in self.patterns.findall(' ' + token):
-                tok = "".join(
-                    self.byte_encoder[b] for b in tok.encode("utf-8"))
-                toks = self.bpe(tok).split(' ')
-                tokk.extend(toks)
+            #! Not sure.
+            return super()._tokenize(token)
+            # for tok in self.patterns.findall(' ' + token):
+            #     tok = "".join(
+            #         self.byte_encoder[b] for b in tok.encode("utf-8"))
+            #     toks = self.bpe(tok).split(' ')
+            #     tokk.extend(toks)
         return tokk
 
     def tokenize_amr(self, amr_tokens):
