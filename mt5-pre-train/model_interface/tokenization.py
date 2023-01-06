@@ -39,9 +39,8 @@ class AMRTokenizer(TargetTokenizer):
             r""" ?<[a-z]+:?\d*>| ?:[^\s]+|'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
         self.remove_pars = False
 
-        #~ Compatibilities from Bart
-        with open(vocab_file, encoding="utf-8") as vocab_handle:
-            self.encoder = json.load(vocab_handle)
+        #~ Compatibilities from AMRBartTokenizer
+        self.encoder = {}
         self.decoder = {v: k for k, v in self.encoder.items()}
 
     @classmethod
@@ -51,23 +50,20 @@ class AMRTokenizer(TargetTokenizer):
         return inst
 
     def init_amr_vocabulary(self):
-        self.old_enc_size = old_enc_size = len(self.encoder)
-        tokens = [t for t in raw_special_tokens if t not in self.encoder]
-
-        for i, t in enumerate(tokens, start=old_enc_size):
-            self.encoder[t] = i
-
-        self.encoder = {k: i for i, (k, v) in enumerate(
-            sorted(self.encoder.items(), key=lambda x: x[1]))}
-        self.decoder = {v: k for k, v in sorted(
-            self.encoder.items(), key=lambda x: x[1])}
+        #~ Compatibilities from AMRBartTokenizer
+        vocab = super().get_vocab()
+        tokens = [t for t in raw_special_tokens if t not in vocab]
+        super()._add_tokens(tokens)
         self.modified = len(tokens)
+        #~
 
         self.amr_bos_token = "<AMR>"
         self.amr_bos_token_id = self.encoder[self.amr_bos_token]
         self.amr_eos_token = "</AMR>"
         self.amr_eos_token_id = self.encoder[self.amr_eos_token]
         print(f"Added {self.modified} AMR tokens")
+
+        self.encoder = super().get_vocab()
 
     def _tokenize(self, text):
         """ Tokenize a string. Modified in order to handle sentences with recategorization pointers"""
