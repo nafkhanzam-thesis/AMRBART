@@ -271,7 +271,7 @@ def train(
         try:
             # set global_step to gobal_step of last saved checkpoint from model path
             checkpoint_suffix = args.model_name_or_path.split(
-                "-")[-1].split("/")[0]
+                "/")[-1].split("-")[1]
             global_step = int(checkpoint_suffix)
             epochs_trained = global_step // (
                 len(train_dataloader) // args.gradient_accumulation_steps
