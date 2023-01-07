@@ -1,7 +1,7 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset="amrbart"
+dataset="test"
 MODEL=$1
 
 datapath="../../datasets/$dataset"
@@ -42,4 +42,5 @@ python -u run_multitask_unified_pretraining.py \
   --max_steps 100000 \
   --logging_steps 100 \
   --fp16 \
+  --no_cache \
   --overwrite_output_dir 2>&1 | tee $outpath/run.log

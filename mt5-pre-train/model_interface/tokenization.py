@@ -16,6 +16,7 @@ class AMRTokenizer(TargetTokenizer):
 
     def __init__(self,
                  vocab_file,
+                 bos_token="<s>",
                  eos_token="</s>",
                  sep_token="</s>",
                  cls_token="<s>",
@@ -60,13 +61,27 @@ class AMRTokenizer(TargetTokenizer):
         super()._add_tokens(tokens)
         self.modified = len(tokens)
         self.encoder = super().get_vocab()
+        self.decoder = {v: k for k, v in self.encoder.items()}
         #~
 
         self.amr_bos_token = "<AMR>"
         self.amr_bos_token_id = self.encoder[self.amr_bos_token]
+        assert self.amr_bos_token_id is not None
         self.amr_eos_token = "</AMR>"
         self.amr_eos_token_id = self.encoder[self.amr_eos_token]
+        assert self.amr_eos_token_id is not None
         print(f"Added {self.modified} AMR tokens")
+
+    __mask_token_counter = 0
+    def reset_mask_token_counter(self):
+        self.__mask_token_counter = 0
+
+    def get_mask_token_id(self, id=None):
+        if id is not None:
+            return self._convert_token_to_id(f"<extra_id_{id}>")
+        res = self.get_mask_token_id(self.__mask_token_counter)
+        self.__mask_token_counter += 1
+        return res
 
     def _tokenize(self, text):
         """ Tokenize a string. Modified in order to handle sentences with recategorization pointers"""

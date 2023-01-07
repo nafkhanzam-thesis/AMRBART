@@ -11,8 +11,8 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 
-def read_or_new_pickle(path, default_fn):
-    if os.path.isfile(path):
+def read_or_new_pickle(path, default_fn, no_cache=False):
+    if not no_cache and os.path.isfile(path):
         with open(path, "rb") as f:
             try:
                 return pickle.load(f)
@@ -36,6 +36,7 @@ class AMRDataSet(torch.nn.Module):
         max_src_length=512,
         max_tgt_length=512,
         ignore_pad_token_for_loss=True,
+        no_cache=False,
     ):
         super().__init__()
         self.train_file = train_file
@@ -47,6 +48,7 @@ class AMRDataSet(torch.nn.Module):
         self.ignore_pad_token_for_loss = ignore_pad_token_for_loss
         self.max_src_length = max_src_length
         self.max_tgt_length = max_tgt_length
+        self.no_cache = no_cache
 
     def setup(self, stage="fit"):
         data_files = {}
@@ -62,6 +64,8 @@ class AMRDataSet(torch.nn.Module):
         padding = "max_length" if self.pad_to_max_length else False
 
         def tokenize_function(examples):
+            print("DEBUG1")
+            print(examples)
             # Remove empty lines
             amrs = examples["amr"]           # AMR tokens
             sents = examples["text"]          # text tokens
@@ -70,6 +74,8 @@ class AMRDataSet(torch.nn.Module):
             model_inputs = self.tokenizer(
                 sents, max_length=self.max_src_length, padding=False, truncation=True
             )
+            print("DEBUG2")
+            print(model_inputs)
             amr_ids = [self.tokenizer.tokenize_amr(itm.split())[
                 :self.max_src_length - 1] + [self.tokenizer.amr_eos_token_id] for itm in amrs]
             model_inputs["labels"] = amr_ids
@@ -99,35 +105,35 @@ class AMRDataSet(torch.nn.Module):
                 + [
                     self.tokenizer.eos_token_id,
                     self.tokenizer.amr_bos_token_id,
-                    self.tokenizer.mask_token_id,
+                    self.tokenizer.get_mask_token_id(0),
                     self.tokenizer.amr_eos_token_id,
                 ]
                 if len(srci) > self.max_src_length - 3
                 else srci
                 + [
                     self.tokenizer.amr_bos_token_id,
-                    self.tokenizer.mask_token_id,
+                    self.tokenizer.get_mask_token_id(0),
                     self.tokenizer.amr_eos_token_id,
                 ]
                 for srci in model_inputs["input_ids"]
             ]  # [<s> x1,x2...,xn <\s> <AMR> [mask] </AMR>]
             Esrctgt_ids = [
                 [
-                    self.tokenizer.bos_token_id,
-                    self.tokenizer.mask_token_id,
+                    # self.tokenizer.bos_token_id, # T5 does not have bos_token
+                    self.tokenizer.get_mask_token_id(0),
                     self.tokenizer.eos_token_id,
                     self.tokenizer.amr_bos_token_id
                 ]
                 + tgti
-                if len(tgti) <= self.max_src_length - 4
+                if len(tgti) <= self.max_src_length - 3
                 else
                 [
-                    self.tokenizer.bos_token_id,
-                    self.tokenizer.mask_token_id,
+                    # self.tokenizer.bos_token_id, # T5 does not have bos_token
+                    self.tokenizer.get_mask_token_id(0),
                     self.tokenizer.eos_token_id,
                     self.tokenizer.amr_bos_token_id
                 ]
-                + tgti[: self.max_src_length - 5]
+                + tgti[: self.max_src_length - 4]
                 + [self.tokenizer.amr_eos_token_id]
                 for tgti in model_inputs["labels"]
             ]  # [<s> [mask] <\s> <AMR> y1,y2...,yn </AMR>]
@@ -144,6 +150,8 @@ class AMRDataSet(torch.nn.Module):
             model_inputs["srcEtgt_segids"] = srcEtgt_segids
             model_inputs["Esrctgt_ids"] = Esrctgt_ids
             model_inputs["Esrctgt_segids"] = Esrctgt_segids
+            print("DEBUG3")
+            print(model_inputs)
             return model_inputs
 
         if not os.path.exists('.cache'):
@@ -151,16 +159,16 @@ class AMRDataSet(torch.nn.Module):
 
         self.train_dataset = read_or_new_pickle(".cache/pre-train-train_dataset.pkl", lambda: datasets["train"].map(
             tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
-        ))
+        ), no_cache=self.no_cache)
         print(f"ALL {len(self.train_dataset)} training instances")
         self.valid_dataset = read_or_new_pickle(".cache/pre-train-valid_dataset.pkl", lambda: datasets["validation"].map(
             tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
-        ))
+        ), no_cache=self.no_cache)
         print(f"ALL {len(self.valid_dataset)} validation instances")
 
         self.test_dataset = read_or_new_pickle(".cache/pre-train-test_dataset.pkl", lambda: datasets["test"].map(
             tokenize_function, batched=True, remove_columns=["amr", "text"], num_proc=1
-        ))
+        ), no_cache=self.no_cache)
         print(f"ALL {len(self.test_dataset)} test instances")
 
         print("Dataset Instance Example:", self.train_dataset[0])

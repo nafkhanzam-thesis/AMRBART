@@ -58,6 +58,9 @@ from common.utils import (
     save_dummy_batch,
 )
 
+import transformers
+transformers.logging.set_verbosity_info()
+
 #! Change again later
 # os.environ["TOKENIZERS_PARALLELISM"] = "true"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -247,8 +250,6 @@ def train(
     logger.info("  Gradient Accumulation steps = %d",
                 args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
-
-    print(args)
 
     global_step = 0
     epochs_trained = 0
@@ -1143,6 +1144,9 @@ def main():
     parser.add_argument(
         "--freeze_decoder", action="store_true", help="Whether to freeze decoder of the modele",
     )
+    parser.add_argument(
+        "--no_cache", action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -1269,6 +1273,7 @@ def main():
         pad_to_max_length=False,
         max_src_length=args.block_size,
         max_tgt_length=256,
+        no_cache=args.no_cache,
     )
     AMRdataset.setup()
 
@@ -1279,10 +1284,9 @@ def main():
     seq2seq_collate_fn = DataCollatorForSeq2Seq(
         tokenizer,
         model=model,
-        padding=True,
         label_pad_token_id=-100,
-        # pad_to_multiple_of=8 if args.fp16 else None,
-        pad_to_multiple_of=None,
+        pad_to_multiple_of=8 if args.fp16 else None,
+        # pad_to_multiple_of=None,
     )
 
     # Training
