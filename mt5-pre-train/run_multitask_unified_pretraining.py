@@ -1279,6 +1279,7 @@ def main():
     seq2seq_collate_fn = DataCollatorForSeq2Seq(
         tokenizer,
         model=model,
+        padding=True,
         label_pad_token_id=-100,
         pad_to_multiple_of=8 if args.fp16 else None,
     )
