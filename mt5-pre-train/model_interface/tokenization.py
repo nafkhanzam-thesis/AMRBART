@@ -45,6 +45,7 @@ class AMRTokenizer(TargetTokenizer):
         self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
         self.encoder = {}
         self.decoder = {v: k for k, v in self.encoder.items()}
+        #~
 
     @classmethod
     def from_pretrained(cls, pretrained_model_path, *args, **kwargs):

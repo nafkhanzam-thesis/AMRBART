@@ -1281,7 +1281,8 @@ def main():
         model=model,
         padding=True,
         label_pad_token_id=-100,
-        pad_to_multiple_of=8 if args.fp16 else None,
+        # pad_to_multiple_of=8 if args.fp16 else None,
+        pad_to_multiple_of=None,
     )
 
     # Training
