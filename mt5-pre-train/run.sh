@@ -1,7 +1,7 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset="test"
+dataset="amrbart"
 MODEL=$1
 
 datapath="../../datasets/$dataset"
