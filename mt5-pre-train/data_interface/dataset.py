@@ -64,8 +64,6 @@ class AMRDataSet(torch.nn.Module):
         padding = "max_length" if self.pad_to_max_length else False
 
         def tokenize_function(examples):
-            print("DEBUG1")
-            print(examples)
             # Remove empty lines
             amrs = examples["amr"]           # AMR tokens
             sents = examples["text"]          # text tokens
@@ -74,8 +72,6 @@ class AMRDataSet(torch.nn.Module):
             model_inputs = self.tokenizer(
                 sents, max_length=self.max_src_length, padding=False, truncation=True
             )
-            print("DEBUG2")
-            print(model_inputs)
             amr_ids = [self.tokenizer.tokenize_amr(itm.split())[
                 :self.max_src_length - 1] + [self.tokenizer.amr_eos_token_id] for itm in amrs]
             model_inputs["labels"] = amr_ids
@@ -150,8 +146,6 @@ class AMRDataSet(torch.nn.Module):
             model_inputs["srcEtgt_segids"] = srcEtgt_segids
             model_inputs["Esrctgt_ids"] = Esrctgt_ids
             model_inputs["Esrctgt_segids"] = Esrctgt_segids
-            print("DEBUG3")
-            print(model_inputs)
             return model_inputs
 
         if not os.path.exists('.cache'):
