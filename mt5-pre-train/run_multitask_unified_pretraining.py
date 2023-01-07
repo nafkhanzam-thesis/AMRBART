@@ -58,9 +58,6 @@ from common.utils import (
     save_dummy_batch,
 )
 
-import transformers
-transformers.logging.set_verbosity_info()
-
 #! Change again later
 # os.environ["TOKENIZERS_PARALLELISM"] = "true"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
