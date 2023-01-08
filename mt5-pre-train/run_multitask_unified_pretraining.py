@@ -36,6 +36,7 @@ import os
 import random
 import re
 import shutil
+import sys
 from tqdm.auto import tqdm, trange
 from typing import Dict, List, Tuple
 from data_interface.dataset import AMRDataSet, DataCollatorForSeq2Seq
@@ -293,7 +294,7 @@ def train(
     set_seed(args)  # Added here for reproducibility
     for epoch in train_iterator:
         epoch_iterator = tqdm(
-            train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0]
+            train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0], file=sys.stdout
         )
 
         if args.local_rank != -1:
@@ -700,7 +701,7 @@ def evaluate(
     nb_eval_steps = 0
     model.eval()
 
-    pbar = tqdm(eval_dataloader, desc="Evaluating")
+    pbar = tqdm(eval_dataloader, desc="Evaluating", file=sys.stdout)
     for batch in pbar:
 
         with torch.no_grad():
