@@ -1,8 +1,9 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset=${2:-amrbart}
 MODEL=${1:-google/t5-small}
+dataset=${2:-amrbart}
+BATCH_SIZE=${3:-4}
 
 datapath="../../datasets/$dataset"
 interval=1
@@ -27,8 +28,8 @@ python -u run_multitask_unified_pretraining.py \
   --mlm_joint_to_amr \
   --mlm_joint_to_text \
   --block_size 512 \
-  --per_gpu_train_batch_size 4 \
-  --gradient_accumulation_steps 4 \
+  --per_gpu_train_batch_size $BATCH_SIZE \
+  --gradient_accumulation_steps $BATCH_SIZE \
   --model_type $MODEL \
   --model_name_or_path $MODEL \
   --save_total_limit 2 \
