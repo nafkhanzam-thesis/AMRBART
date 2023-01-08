@@ -568,7 +568,8 @@ def train(
                             args, eval_dataset, collate_fn, model, tokenizer, config=config
                         )
                         cur_score = results["perplexity"].item()
-                        if cur_score < best_score:
+                        #~ Why do I feel like to always save the checkpoint even if it is worse?
+                        if (cur_score < best_score) or True:
                             best_score = cur_score
                             checkpoint_prefix = "checkpoint"
                             # Save model checkpoint
