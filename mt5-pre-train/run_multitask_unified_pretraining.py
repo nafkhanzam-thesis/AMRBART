@@ -109,7 +109,7 @@ def _sorted_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
             ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
         else:
             regex_match = re.match(
-                ".*{}-([0-9]+)".format(checkpoint_prefix), path)
+                ".*{}-([0-9]+)-([0-9]+)(\.([0-9]+))?".format(checkpoint_prefix), path)
             if regex_match and regex_match.groups():
                 ordering_and_checkpoint_path.append(
                     (int(regex_match.groups()[0]), path))
@@ -712,10 +712,10 @@ def evaluate(
                     batch, tokenizer, mlm_prob=0.35
                 )
 
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -734,10 +734,10 @@ def evaluate(
                     batch, tokenizer, mlm_prob=0.35
                 )
 
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -754,10 +754,10 @@ def evaluate(
                 masked_input, attention_mask, dec_input, labels = get_PTPG2partial(
                     batch, tokenizer, inp="text"
                 )
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -773,10 +773,10 @@ def evaluate(
                 masked_input, attention_mask, dec_input, labels = get_PTPG2partial(
                     batch, tokenizer, inp="amr"
                 )
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -792,10 +792,10 @@ def evaluate(
                 masked_input, attention_mask, dec_input, labels = get_MTMG2partial(
                     batch, tokenizer, inp="text", mlm_prob=mlm_prob
                 )
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -811,10 +811,10 @@ def evaluate(
                 masked_input, attention_mask, dec_input, labels = get_MTMG2partial(
                     batch, tokenizer, inp="amr", mlm_prob=mlm_prob
                 )
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -830,10 +830,10 @@ def evaluate(
                 masked_input, attention_mask, dec_input, labels = get_MTMG2TG(
                     batch, tokenizer, mlm_prob=mlm_prob
                 )
-                masked_input = masked_input.to("cuda:0")
-                attention_mask = attention_mask.to("cuda:0")
-                labels = labels.to("cuda:0")
-                dec_input = dec_input.to("cuda:0")
+                masked_input = masked_input.to(args.device)
+                attention_mask = attention_mask.to(args.device)
+                labels = labels.to(args.device)
+                dec_input = dec_input.to(args.device)
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
@@ -1340,10 +1340,8 @@ def main():
             )  # Reduce logging
         logger.info("Evaluate the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
-            global_step = checkpoint.split(
-                "-")[-1] if len(checkpoints) > 1 else ""
-            prefix = checkpoint.split(
-                "/")[-1] if checkpoint.find("checkpoint") != -1 else ""
+            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+            prefix = checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
 
             model = TargetForConditionalGeneration.from_pretrained(checkpoint)
             model.to(args.device)
