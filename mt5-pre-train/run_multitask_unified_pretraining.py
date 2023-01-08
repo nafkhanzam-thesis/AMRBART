@@ -317,7 +317,7 @@ def train(
                 masked_input = masked_input.to(args.device)
                 attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
-                # dec_input = dec_input.to(args.device)
+                dec_input = dec_input.to(args.device)
 
                 if step == 0 and epoch == 0:
                     save_dummy_batch(
@@ -326,7 +326,7 @@ def train(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 # model outputs are always tuple in transformers (see doc)
@@ -342,7 +342,7 @@ def train(
                 masked_input = masked_input.to(args.device)
                 attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
-                # dec_input = dec_input.to(args.device)
+                dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
                     save_dummy_batch(
                         args, masked_input, dec_input, labels, tokenizer, prefix="textEamr2text"
@@ -350,7 +350,7 @@ def train(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 # model outputs are always tuple in transformers (see doc)
@@ -367,7 +367,7 @@ def train(
                     masked_input = masked_input.to(args.device)
                     attention_mask = attention_mask.to(args.device)
                     labels = labels.to(args.device)
-                    # dec_input = dec_input.to(args.device)
+                    dec_input = dec_input.to(args.device)
                     if step == 0 and epoch == 0:
                         save_dummy_batch(
                             args,
@@ -380,7 +380,7 @@ def train(
                     outputs = model(
                         input_ids=masked_input,
                         attention_mask=attention_mask,
-                        # decoder_input_ids=dec_input,
+                        decoder_input_ids=dec_input,
                         labels=labels,
                     )
                     text_joint_loss = outputs[0]
@@ -398,7 +398,7 @@ def train(
                     masked_input = masked_input.to(args.device)
                     attention_mask = attention_mask.to(args.device)
                     labels = labels.to(args.device)
-                    # dec_input = dec_input.to(args.device)
+                    dec_input = dec_input.to(args.device)
                     if step == 0 and epoch == 0:
                         save_dummy_batch(
                             args,
@@ -412,7 +412,7 @@ def train(
                     outputs = model(
                         input_ids=masked_input,
                         attention_mask=attention_mask,
-                        # decoder_input_ids=dec_input,
+                        decoder_input_ids=dec_input,
                         labels=labels,
                     )
                     amr_joint_loss = outputs[0]
@@ -429,7 +429,7 @@ def train(
                 masked_input = masked_input.to(args.device)
                 attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
-                # dec_input = dec_input.to(args.device)
+                dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
                     save_dummy_batch(
                         args,
@@ -442,7 +442,7 @@ def train(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 text_joint_loss2 = outputs[0]
@@ -457,7 +457,7 @@ def train(
                 masked_input = masked_input.to(args.device)
                 attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
-                # dec_input = dec_input.to(args.device)
+                dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
                     save_dummy_batch(
                         args, masked_input, dec_input, labels, tokenizer, prefix="val_MtextMamr2amr"
@@ -466,7 +466,7 @@ def train(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 amr_joint_loss2 = outputs[0]
@@ -481,7 +481,7 @@ def train(
                 masked_input = masked_input.to(args.device)
                 attention_mask = attention_mask.to(args.device)
                 labels = labels.to(args.device)
-                # dec_input = dec_input.to(args.device)
+                dec_input = dec_input.to(args.device)
                 if step == 0 and epoch == 0:
                     save_dummy_batch(
                         args,
@@ -495,7 +495,7 @@ def train(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 joint2joint_loss = outputs[0]
@@ -718,7 +718,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 # model outputs are always tuple in transformers (see doc)
@@ -740,7 +740,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 # model outputs are always tuple in transformers (see doc)
@@ -760,7 +760,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 text_joint_loss = outputs[0]
@@ -779,7 +779,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 amr_joint_loss = outputs[0]
@@ -798,7 +798,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 text_joint_loss2 = outputs[0]
@@ -817,7 +817,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 amr_joint_loss2 = outputs[0]
@@ -836,7 +836,7 @@ def evaluate(
                 outputs = model(
                     input_ids=masked_input,
                     attention_mask=attention_mask,
-                    # decoder_input_ids=dec_input,
+                    decoder_input_ids=dec_input,
                     labels=labels,
                 )
                 joint2joint_loss = outputs[0]
