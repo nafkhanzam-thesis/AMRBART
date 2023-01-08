@@ -47,7 +47,6 @@ import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 from torch.cuda.amp import autocast
-from tqdm import tqdm, trange
 from common.utils import (
     get_MTEG2text,
     get_ETMG2graph,
@@ -57,6 +56,22 @@ from common.utils import (
     get_inverse_sqrt_schedule_with_warmup,
     save_dummy_batch,
 )
+
+def in_ipython() -> bool:
+    """
+    Check whether we're in an ipython environment, including jupyter notebooks.
+    """
+    try:
+        eval('__IPYTHON__')
+    except NameError:
+        return False
+    else:  # pragma: no cover
+        return True
+
+if in_ipython():
+    from tqdm.notebook import tqdm, trange
+else:
+    from tqdm import tqdm, trange
 
 #! Change again later
 # os.environ["TOKENIZERS_PARALLELISM"] = "true"
