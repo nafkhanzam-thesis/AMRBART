@@ -71,7 +71,7 @@ def is_notebook() -> bool:
     except NameError:
         return False      # Probably standard Python interpreter
 
-if in_ipython():
+if is_notebook():
     from tqdm.notebook import tqdm, trange
 else:
     from tqdm import tqdm, trange
