@@ -36,6 +36,7 @@ import os
 import random
 import re
 import shutil
+from tqdm.auto import tqdm, trange
 from typing import Dict, List, Tuple
 from data_interface.dataset import AMRDataSet, DataCollatorForSeq2Seq
 from transformers import MT5ForConditionalGeneration as TargetForConditionalGeneration
@@ -56,10 +57,6 @@ from common.utils import (
     save_dummy_batch,
 )
 
-if os.getenv("NOTEBOOK") == "True":
-    from tqdm.notebook import tqdm, trange
-else:
-    from tqdm import tqdm, trange
 
 #! Change again later
 # os.environ["TOKENIZERS_PARALLELISM"] = "true"
