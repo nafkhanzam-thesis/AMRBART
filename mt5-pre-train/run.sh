@@ -10,7 +10,7 @@ interval=1
 
 lr=5e-5
 
-outpath=../outputs/${dataset}-$(echo $MODEL | sed -r 's/\//-/g')-Unifiedtextinf-JointDenoise-6task-${lr}-AMREOS
+outpath=../outputs/${dataset}-$(echo $MODEL | sed -r 's/\.\.\///g' | sed -r 's/\//-/g')-Unifiedtextinf-JointDenoise-6task-${lr}-AMREOS
 
 mkdir -p $outpath
 echo "OutputDir: $outpath"
