@@ -57,16 +57,19 @@ from common.utils import (
     save_dummy_batch,
 )
 
-def in_ipython() -> bool:
-    """
-    Check whether we're in an ipython environment, including jupyter notebooks.
-    """
+def is_notebook() -> bool:
     try:
-        eval('__IPYTHON__')
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True   # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        elif get_ipython().__class__.__module__ == "google.colab._shell":
+            return True
+        else:
+            return False  # Other type (?)
     except NameError:
-        return False
-    else:  # pragma: no cover
-        return True
+        return False      # Probably standard Python interpreter
 
 if in_ipython():
     from tqdm.notebook import tqdm, trange
