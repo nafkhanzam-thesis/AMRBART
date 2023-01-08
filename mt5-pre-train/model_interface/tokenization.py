@@ -26,13 +26,13 @@ class AMRTokenizer(TargetTokenizer):
                  add_prefix_space=False,
                  **kwargs):
         super().__init__(vocab_file,
-                        # bos_token=bos_token,
+                        bos_token=bos_token,
                         eos_token=eos_token,
-                        # sep_token=sep_token,
-                        # cls_token=cls_token,
+                        sep_token=sep_token,
+                        cls_token=cls_token,
                         unk_token=unk_token,
                         pad_token=pad_token,
-                        # mask_token=mask_token,
+                        mask_token=mask_token,
                         # add_prefix_space=add_prefix_space,
                          **kwargs)
         self.modified = 0
@@ -77,6 +77,7 @@ class AMRTokenizer(TargetTokenizer):
         self.__mask_token_counter = 0
 
     def get_mask_token_id(self, id=None):
+        # return self.mask_token_id
         if id is not None:
             return self._convert_token_to_id(f"<extra_id_{id}>")
         res = self.get_mask_token_id(self.__mask_token_counter)

@@ -1,8 +1,8 @@
 #! /bin/bash
 
 export CUDA_VISIBLE_DEVICES=0
-dataset="amrbart"
-MODEL=$1
+dataset=${2:-amrbart}
+MODEL=${1:-google/t5-small}
 
 datapath="../../datasets/$dataset"
 interval=1

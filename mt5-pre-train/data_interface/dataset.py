@@ -10,6 +10,10 @@ from transformers.file_utils import PaddingStrategy
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
+def ids_to_clean_text(tokenizer, generated_ids):
+    gen_text = tokenizer.batch_decode(generated_ids, clean_up_tokenization_spaces=False)
+    return gen_text
+
 
 def read_or_new_pickle(path, default_fn, no_cache=False):
     if not no_cache and os.path.isfile(path):
@@ -73,15 +77,20 @@ class AMRDataSet(torch.nn.Module):
                 sents, max_length=self.max_src_length, padding=False, truncation=True
             )
             amr_ids = [self.tokenizer.tokenize_amr(itm.split())[
-                :self.max_src_length - 1] + [self.tokenizer.amr_eos_token_id] for itm in amrs]
+                :self.max_src_length - 1] for itm in amrs]
             model_inputs["labels"] = amr_ids
+            model_inputs["input_ids"] = [a[:-1] for a in model_inputs["input_ids"]]
 
             joint_ids = [
-                srci + [self.tokenizer.amr_bos_token_id] + tgti
+                [self.tokenizer.bos_token_id] + srci + [self.tokenizer.eos_token_id, self.tokenizer.amr_bos_token_id] + tgti + [self.tokenizer.amr_eos_token_id]
                 for srci, tgti in zip(model_inputs["input_ids"], model_inputs["labels"])
             ]  # [<s> x1,x2...,xn </s> <AMR> y1,y2,...ym </AMR>]
+            # print()
+            # print("DEBUG69")
+            # print(ids_to_clean_text(self.tokenizer, joint_ids))
 
             max_src_length = min(self.max_src_length * 2, 512)
+            #! With an assumption that the text won't be longer than `max_scr_length - 4`.
             joint_ids = [
                 itm[:max_src_length - 1] + [self.tokenizer.amr_eos_token_id]
                 if len(itm) > max_src_length
@@ -89,63 +98,50 @@ class AMRDataSet(torch.nn.Module):
                 for itm in joint_ids
             ]
             seg_ids = [
-                [0 for _ in range(len(srci))] +
-                [1 for _ in range(len(tgti) + 1)]
+                [0]*(len(srci)+2) + [1]*(len(tgti)+2)
                 for srci, tgti in zip(model_inputs["input_ids"], model_inputs["labels"])
             ]  # [0,0,...,0,1,1,...1]
             seg_ids = [itm[:max_src_length] for itm in seg_ids]
             model_inputs["joint_ids"] = joint_ids
             model_inputs["seg_ids"] = seg_ids
             srcEtgt_ids = [
-                srci[: self.max_src_length - 4]
+                [self.tokenizer.bos_token_id]
+                + srci[:self.max_src_length - 5]
                 + [
                     self.tokenizer.eos_token_id,
                     self.tokenizer.amr_bos_token_id,
-                    self.tokenizer.get_mask_token_id(0),
-                    self.tokenizer.amr_eos_token_id,
-                ]
-                if len(srci) > self.max_src_length - 3
-                else srci
-                + [
-                    self.tokenizer.amr_bos_token_id,
-                    self.tokenizer.get_mask_token_id(0),
+                    self.tokenizer.mask_token_id,
                     self.tokenizer.amr_eos_token_id,
                 ]
                 for srci in model_inputs["input_ids"]
             ]  # [<s> x1,x2...,xn <\s> <AMR> [mask] </AMR>]
+            srcEtgt_segids = [
+                [0]*(len(itm) - 3) + [1]*3
+                for itm in srcEtgt_ids
+            ]
             Esrctgt_ids = [
                 [
-                    # self.tokenizer.bos_token_id, # T5 does not have bos_token
-                    self.tokenizer.get_mask_token_id(0),
+                    self.tokenizer.bos_token_id, # T5 does not have bos_token
+                    self.tokenizer.mask_token_id,
                     self.tokenizer.eos_token_id,
                     self.tokenizer.amr_bos_token_id
                 ]
-                + tgti
-                if len(tgti) <= self.max_src_length - 3
-                else
-                [
-                    # self.tokenizer.bos_token_id, # T5 does not have bos_token
-                    self.tokenizer.get_mask_token_id(0),
-                    self.tokenizer.eos_token_id,
-                    self.tokenizer.amr_bos_token_id
-                ]
-                + tgti[: self.max_src_length - 4]
+                + tgti[:self.max_src_length - 5]
                 + [self.tokenizer.amr_eos_token_id]
                 for tgti in model_inputs["labels"]
             ]  # [<s> [mask] <\s> <AMR> y1,y2...,yn </AMR>]
-
             Esrctgt_segids = [
-                [0 for _ in range(3)] + [1 for _ in range(len(itm) - 3)]
+                [0]*3 + [1]*(len(itm) - 3)
                 for itm in Esrctgt_ids
-            ]
-            srcEtgt_segids = [
-                [0 for _ in range(len(itm) - 3)] + [1 for _ in range(3)]
-                for itm in srcEtgt_ids
             ]
             model_inputs["srcEtgt_ids"] = srcEtgt_ids
             model_inputs["srcEtgt_segids"] = srcEtgt_segids
             model_inputs["Esrctgt_ids"] = Esrctgt_ids
             model_inputs["Esrctgt_segids"] = Esrctgt_segids
+            model_inputs["labels"] = [(amr_ids[:self.max_src_length-1] + [self.tokenizer.amr_eos_token_id]) for amr_ids in model_inputs["labels"]]
+            model_inputs["input_ids"] = [([self.tokenizer.bos_token_id] + ids[:self.max_src_length-2] + [self.tokenizer.eos_token_id]) for ids in model_inputs["input_ids"]]
+            # print()
+            # print(model_inputs)
             return model_inputs
 
         if not os.path.exists('.cache'):

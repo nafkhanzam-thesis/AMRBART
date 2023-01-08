@@ -60,7 +60,7 @@ def get_inverse_sqrt_schedule_with_warmup(
 def ids_to_clean_text(tokenizer, generated_ids: List[int]):
     generated_ids.masked_fill_(generated_ids == -100, tokenizer.pad_token_id)
     gen_text = tokenizer.batch_decode(generated_ids, clean_up_tokenization_spaces=False)
-    return "".join(gen_text)
+    return gen_text
 
 
 def save_dummy_batch(args, input_ids, dec_inp_ids, labels, tokenizer, prefix="train"):
@@ -88,11 +88,10 @@ def sentence_infilling(tokenizer, inp, mlm_prob=0.35):
     masking_length = math.floor(token_length * mlm_prob)
     masked_length = 1
     masked_inputs = inp.clone().tolist()
-    tokenizer.reset_mask_token_counter()
     while masked_length < masking_length:
         span_length = min(math.floor(np.random.poisson(3, 1)), token_length - 1)
         start_index = math.floor(np.random.uniform(1, token_length - span_length, 1))
-        masked_inputs = masked_inputs[:start_index] + [tokenizer.get_mask_token_id()] + masked_inputs[start_index + span_length:]
+        masked_inputs = masked_inputs[:start_index] + [tokenizer.mask_token_id] + masked_inputs[start_index + span_length:]
         token_length -= span_length - 1
         masked_length += span_length
     return torch.LongTensor(masked_inputs)
@@ -144,9 +143,9 @@ def get_STD2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
         attention_mask = masked_input.ne(tokenizer.pad_token_id).int()
         labels = ori_input.clone()
         labels.masked_fill_(labels == tokenizer.pad_token_id, -100)
-        labels = labels[:, 1:]                      # [w1 w2 w3 ...]
+        # labels = labels[:, 1:]                      # [w1 w2 w3 ...]
         dec_input = ori_input[:, :-1]
-        return masked_input, attention_mask, dec_input, labels
+        return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
     else:
         labels = batch["labels"]                                # [bsz, len+1]
         shifted_input_ids = labels.new_zeros(labels.size(0), labels.size(1) + 1)
@@ -159,7 +158,7 @@ def get_STD2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
         dec_input[:, 1:] = labels[:, :-1].clone()
         dec_input[:, 0] = tokenizer.amr_bos_token_id                                # <s> w1 w2, ..., wn
         dec_input.masked_fill_(dec_input == -100, tokenizer.pad_token_id)
-        return masked_input, attention_mask, dec_input, labels
+        return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
 
 
 def get_MTEG2text(batch, tokenizer, mlm_prob=0.35):
@@ -172,10 +171,10 @@ def get_MTEG2text(batch, tokenizer, mlm_prob=0.35):
     attention_mask = masked_input.ne(tokenizer.pad_token_id).int()              # attention mask
     labels = batch["input_ids"].clone()     # <s> x1...,xn </s> pad pad
     labels.masked_fill_(labels == tokenizer.pad_token_id, -100)
-    labels = labels[:, 1:]                  # x1...,xn </s> pad pad
+    # labels = labels[:, 1:]                  # x1...,xn </s> pad pad
     dec_input = batch["input_ids"].clone()
     dec_input = dec_input[:, :-1]
-    return masked_input, attention_mask, dec_input, labels
+    return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
 
 
 def get_ETMG2graph(batch, tokenizer, mlm_prob=0.35):
@@ -191,7 +190,7 @@ def get_ETMG2graph(batch, tokenizer, mlm_prob=0.35):
     dec_input[:, 1:] = labels[:, :-1].clone()
     dec_input[:, 0] = tokenizer.amr_bos_token_id                        # <s> w1 w2, ..., wn
     dec_input.masked_fill_(dec_input == -100, tokenizer.pad_token_id)
-    return masked_input, attention_mask, dec_input, labels
+    return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
 
 
 def get_PTPG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
@@ -205,7 +204,7 @@ def get_PTPG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
         masked_input = joint_infilling_partial(ori_input, seg_ids, tokenizer, mask_txt=True, mlm_prob=mlm_prob)
         labels = batch["input_ids"].clone()
         labels.masked_fill_(labels == tokenizer.pad_token_id, -100)
-        labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
+        # labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
         dec_input = batch["input_ids"].clone()
         dec_input = dec_input[:, :-1]                                           # <s> w1, w2, ..., wn
     else:
@@ -217,7 +216,7 @@ def get_PTPG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
         dec_input.masked_fill_(dec_input == -100, tokenizer.pad_token_id)                                  # <AMR> w1 w2, ..., wn
 
     attention_mask = masked_input.ne(tokenizer.pad_token_id).int()              # attention mask
-    return masked_input, attention_mask, dec_input, labels
+    return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
 
 
 def get_MTMG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
@@ -231,7 +230,7 @@ def get_MTMG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
     if inp == 'text':
         labels = batch["input_ids"].clone()
         labels.masked_fill_(labels == tokenizer.pad_token_id, -100)
-        labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
+        # labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
         dec_input = batch["input_ids"].clone()
         dec_input = dec_input[:, :-1]                                           # <s> w1 w2, ..., wn
     else:
@@ -242,7 +241,7 @@ def get_MTMG2partial(batch, tokenizer, inp='text', mlm_prob=0.35):
         dec_input.masked_fill_(dec_input == -100, tokenizer.pad_token_id)
 
     attention_mask = masked_input.ne(tokenizer.pad_token_id).int()              # attention mask
-    return masked_input, attention_mask, dec_input, labels
+    return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
 
 
 def get_MTMG2TG(batch, tokenizer, mlm_prob=0.35):
@@ -252,8 +251,16 @@ def get_MTMG2TG(batch, tokenizer, mlm_prob=0.35):
 
     labels = batch["joint_ids"].clone()
     labels.masked_fill_(labels == tokenizer.pad_token_id, -100)
-    labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
+    # labels = labels[:, 1:]                                                  # w1, w2, .., wn <\s>
     dec_input = batch["joint_ids"].clone()
     dec_input = dec_input[:, :-1]                                           # <s> w1 w2, ..., wn
     attention_mask = masked_input.ne(tokenizer.pad_token_id).int()          # attention mask
-    return masked_input, attention_mask, dec_input, labels
+    return change_to_extra_id_mask(masked_input, tokenizer), attention_mask, dec_input, labels
+
+
+def change_to_extra_id_mask(masked_input, tokenizer):
+    for i in range(len(masked_input)):
+        tokenizer.reset_mask_token_counter()
+        masked_input[i] = masked_input[i].apply_(lambda x: tokenizer.get_mask_token_id() if x == tokenizer.mask_token_id else x)
+
+    return masked_input
