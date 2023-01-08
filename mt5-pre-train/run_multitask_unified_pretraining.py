@@ -59,20 +59,13 @@ from common.utils import (
 
 def is_notebook() -> bool:
     try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return False  # Terminal running IPython
-        elif get_ipython().__class__.__module__ == "google.colab._shell":
-            return True
-        else:
-            return False  # Other type (?)
+        return get_ipython().__class__.__module__ == "google.colab._shell"
     except NameError:
         return False      # Probably standard Python interpreter
 
 if is_notebook():
     from tqdm.notebook import tqdm, trange
+    print("DETECTED TO BE IN A NOTEBOOK!")
 else:
     from tqdm import tqdm, trange
 
