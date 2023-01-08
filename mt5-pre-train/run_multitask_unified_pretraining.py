@@ -33,7 +33,6 @@ import argparse
 import glob
 import logging
 import os
-from posixpath import join
 import random
 import re
 import shutil
@@ -57,15 +56,8 @@ from common.utils import (
     save_dummy_batch,
 )
 
-def is_notebook() -> bool:
-    try:
-        return get_ipython().__class__.__module__ == "google.colab._shell"
-    except NameError:
-        return False      # Probably standard Python interpreter
-
-if is_notebook():
+if os.getenv("NOTEBOOK") == "True":
     from tqdm.notebook import tqdm, trange
-    print("DETECTED TO BE IN A NOTEBOOK!")
 else:
     from tqdm import tqdm, trange
 
@@ -81,7 +73,6 @@ except ImportError:
     from tensorboardX import SummaryWriter
 
 logger = logging.getLogger(__name__)
-
 
 def shift_tokens_right(input_ids: torch.Tensor, pad_token_id: int, decoder_start_token_id: int):
     """
