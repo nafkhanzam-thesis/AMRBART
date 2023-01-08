@@ -4,7 +4,7 @@ export CUDA_VISIBLE_DEVICES=0
 MODEL=${1:-google/t5-small}
 dataset=${2:-amrbart}
 BATCH_SIZE=${3:-4}
-num_train_epochs=${4:-1000}
+logging_steps=${4:-1000}
 
 datapath="../../datasets/$dataset"
 interval=1
@@ -37,11 +37,10 @@ python -u run_multitask_unified_pretraining.py \
   --do_train \
   --do_eval \
   --evaluate_during_training  \
-  --num_train_epochs $num_train_epochs  \
+  --num_train_epochs 1000  \
   --learning_rate $lr \
   --joint_train_interval $interval \
   --warmup_steps 2500 \
   --max_steps 100000 \
-  --logging_steps 100 \
-  --fp16 \
+  --logging_steps $logging_steps \
   --overwrite_output_dir 2>&1 | tee $outpath/run.log
