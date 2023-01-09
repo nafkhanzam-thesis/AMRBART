@@ -5,6 +5,7 @@ MODEL=${1:-google/t5-small}
 dataset=${2:-amrbart}
 BATCH_SIZE=${3:-4}
 logging_steps=${4:-1000}
+rest_args=${@:5}
 
 datapath="../../datasets/$dataset"
 interval=1
@@ -16,7 +17,7 @@ outpath=../outputs/${dataset}-$(echo $MODEL | sed -r 's/\.\.\///g' | sed -r 's/\
 mkdir -p $outpath
 echo "OutputDir: $outpath"
 
-python -u run_multitask_unified_pretraining.py \
+python -u run_multitask_unified_pretraining.py $rest_args \
   --train_file $datapath/train.jsonl \
   --val_file $datapath/val.jsonl \
   --test_file $datapath/test.jsonl \
