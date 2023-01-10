@@ -34,7 +34,7 @@ python -u run_multitask_unified_pretraining.py $rest_args \
   --gradient_accumulation_steps $BATCH_SIZE \
   --model_type $MODEL \
   --model_name_or_path $MODEL \
-  --save_total_limit 10 \
+  --save_total_limit 2 \
   --do_train \
   --do_eval \
   --evaluate_during_training  \
