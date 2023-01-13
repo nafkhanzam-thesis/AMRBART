@@ -876,7 +876,7 @@ def evaluate(
     return result
 
 
-def main():
+def main(args=None):
     parser = argparse.ArgumentParser()
 
     # Required parameters
@@ -1146,7 +1146,9 @@ def main():
         "--no_cache", action="store_true",
     )
 
-    args = parser.parse_args()
+    args = args if args is not None else parser.parse_args()
+
+    print(args)
 
     if args.model_type in ["bert", "roberta", "distilbert", "camembert"] and not args.mlm:
         raise ValueError(
