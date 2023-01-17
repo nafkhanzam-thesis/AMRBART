@@ -127,7 +127,7 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    
+
     tokenizer = AMRBartTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
@@ -178,10 +178,10 @@ def main():
                 f" `--max_source_length` to {model.config.max_position_embeddings} or to automatically resize the"
                 " model's position encodings by passing `--resize_position_embeddings`."
             )
-            
+
     if training_args.do_train and training_args.smart_init and training_args.resume_from_checkpoint is None and last_checkpoint is None:
         smart_emb_init(tokenizer, model)
-            
+
     if training_args.label_smoothing_factor > 0 and not hasattr(
         model, "prepare_decoder_input_ids_from_labels"
     ):
@@ -192,7 +192,7 @@ def main():
 
     DataSetCate = AMR2TextDataSet if training_args.task == "amr2text" else AMRParsingDataSet
     raw_datasets = DataSetCate(tokenizer, data_args, model_args)
-    
+
     column_names = raw_datasets.datasets["train"].column_names
 
     if training_args.do_train:
@@ -202,7 +202,7 @@ def main():
         if data_args.max_train_samples is not None:
             max_train_samples = min(len(train_dataset), data_args.max_train_samples)
             train_dataset = train_dataset.select(range(max_train_samples))
-        
+
         if data_args.overwrite_cache or not os.path.exists(data_args.data_cache_dir + "/train"):
             with training_args.main_process_first(desc="train dataset map pre-processing"):
                 train_dataset = train_dataset.map(
@@ -266,14 +266,14 @@ def main():
 
     # label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     label_pad_token_id = tokenizer.pad_token_id
-    
+
     DataCollatorCate = DataCollatorForAMR2Text if training_args.task == "amr2text" else DataCollatorForAMRParsing
     data_collator = DataCollatorCate(
         tokenizer,
         label_pad_token_id=label_pad_token_id,
         pad_to_multiple_of=8 if training_args.fp16 else None,
     )
-    
+
     metric = load_metric(path="metric/sacrebleu.py") if training_args.task == "amr2text" else None
 
     def compute_metrics_parsing(eval_preds, global_step=0, prefix="val"):
@@ -284,21 +284,21 @@ def main():
         # print("labels", labels)
         if isinstance(preds, tuple):
             preds = preds[0]
-        
+
         inputs = np.where(inputs != -100, inputs, tokenizer.pad_token_id)
-        decoded_inputs = tokenizer.batch_decode(inputs, skip_special_tokens=True)  
+        decoded_inputs = tokenizer.batch_decode(inputs, skip_special_tokens=True)
         # if data_args.ignore_pad_token_for_loss:
         #     # Replace -100 in the labels as we can't decode them.
         #     labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
         # decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
         os.makedirs(training_args.output_dir + "/val_outputs/", exist_ok=True)
-        
+
         # gen_graphs = tokenizer.batch_decode(preds, skip_special_tokens=True)
         # debug_output = f"{training_args.output_dir}/val_outputs/{prefix}_nodes_{global_step}.json"
-        
+
         # with open(debug_output, 'w', encoding='utf-8') as fout:
         #     json.dump(gen_graphs, fout, indent=4)
-        
+
         graphs = []
         for idx in range(len(preds)):
             graphs_same_source = []
@@ -309,7 +309,7 @@ def main():
                 tokenizer.eos_token_id if itm == tokenizer.amr_eos_token_id else itm
                 for itm in ith_pred if itm != tokenizer.pad_token_id
             ]
-            
+
             graph, status, (lin, backr) = tokenizer.decode_amr(
                 ith_pred, restore_name_ops=False
             )
@@ -318,7 +318,7 @@ def main():
             graph.backreferences = backr
             graph.tokens = ith_pred
             graphs_same_source.append(graph)
-        
+
         graphs_same_source[:] = tuple(
             zip(*sorted(enumerate(graphs_same_source), key=lambda x: (x[1].status.value, x[0])))
         )[1]
@@ -338,7 +338,7 @@ def main():
                     del metadata["save-date"]
                 gp.metadata = metadata
                 idx += 1
-        
+
         # print("Before Penman Encoding")
         pieces = [penman.encode(g[0]) for g in graphs]
         output_prediction_file = f"{training_args.output_dir}/val_outputs/{prefix}_generated_predictions_{global_step}.txt"
@@ -351,13 +351,13 @@ def main():
             )
         except:
             smatch_score = {"smatch": 0.0}
-            
+
         result = {"smatch":smatch_score["smatch"]}
         prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
         result = {k: round(v, 4) for k, v in result.items()}
         return result
-    
+
     def compute_metrics_generation(eval_preds, global_step=0, prefix="val"):
         prefix = "test" if prefix == "predict" else "val"
         preds, labels, inputs = eval_preds
@@ -366,12 +366,12 @@ def main():
         # print("labels", labels)
         if isinstance(preds, tuple):
             preds = preds[0]
-        
+
         def postprocess_text(preds, labels):
             preds = [pred.strip() for pred in preds]
             labels = [[label.strip()] for label in labels]           # sacrebleu uses multi reference setting
             return preds, labels
-        
+
         decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
         if data_args.ignore_pad_token_for_loss:
             # Replace -100 in the labels as we can't decode them.
@@ -391,15 +391,15 @@ def main():
         output_prediction_file = f"{training_args.output_dir}/val_outputs/{prefix}_generated_predictions_{global_step}.txt"
         with open(output_prediction_file, "w") as p_writer:
             p_writer.write("\n".join(decoded_preds) + "\n")
-            
+
         prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
         result["gen_len"] = np.mean(prediction_lens)
         result = {k: round(v, 4) for k, v in result.items()}
         return result
-    
+
     es_callback = EarlyStoppingCallback(early_stopping_patience=training_args.early_stopping)
     training_args.max_target_length = data_args.max_target_length
-    
+
     compute_metrics = compute_metrics_generation if training_args.task == "amr2text" else compute_metrics_parsing
     trainer = Seq2SeqTrainer(
         model=model,
@@ -419,7 +419,7 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        
+
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         # trainer.save_model()  # Saves the tokenizer too for easy upload
 
@@ -450,7 +450,7 @@ def main():
     )
 
     if training_args.do_eval:
-        
+
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate(
             max_length=max_length, num_beams=num_beams, metric_key_prefix="eval"
