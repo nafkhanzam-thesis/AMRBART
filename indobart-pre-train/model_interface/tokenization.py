@@ -91,6 +91,9 @@ class AMRTokenizer(TargetTokenizer):
         self.amr_eos_token_id = self.encoder[self.amr_eos_token]
         print(f"Added {self.modified} AMR tokens")
 
+    def reset_mask_token_counter(self):
+        pass
+
     def get_mask_token_id(self, id=None):
         return self.mask_token_id
 
