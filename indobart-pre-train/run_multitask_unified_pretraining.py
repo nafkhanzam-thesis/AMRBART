@@ -40,7 +40,7 @@ import sys
 from tqdm.auto import tqdm, trange
 from typing import Dict, List, Tuple
 from data_interface.dataset import AMRDataSet, DataCollatorForSeq2Seq
-from transformers import MT5ForConditionalGeneration as TargetForConditionalGeneration
+from transformers import MBartForConditionalGeneration as TargetForConditionalGeneration
 from model_interface.tokenization import AMRTokenizer
 
 import numpy as np
