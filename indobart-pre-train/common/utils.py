@@ -59,7 +59,7 @@ def get_inverse_sqrt_schedule_with_warmup(
 
 def ids_to_clean_text(tokenizer, generated_ids: List[int]):
     generated_ids.masked_fill_(generated_ids == -100, tokenizer.pad_token_id)
-    gen_text = tokenizer.batch_decode(generated_ids, clean_up_tokenization_spaces=False)
+    gen_text = tokenizer.batch_decode(generated_ids)
     return gen_text
 
 
