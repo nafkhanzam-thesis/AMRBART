@@ -16,8 +16,7 @@ class AMRTokenizer(TargetTokenizer):
     def __init__(
         self,
         vocab_file,
-        merges_file,
-        errors="replace",
+        decode_special_token=True,
         bos_token="<s>",
         eos_token="</s>",
         sep_token="</s>",
@@ -25,13 +24,12 @@ class AMRTokenizer(TargetTokenizer):
         unk_token="<unk>",
         pad_token="<pad>",
         mask_token="<mask>",
-        add_prefix_space=False,
+        additional_special_tokens=[],
         **kwargs,
     ):
         super().__init__(
             vocab_file,
-            merges_file,
-            errors,
+            decode_special_token,
             bos_token,
             eos_token,
             sep_token,
@@ -39,7 +37,7 @@ class AMRTokenizer(TargetTokenizer):
             unk_token,
             pad_token,
             mask_token,
-            add_prefix_space,
+            additional_special_tokens,
             **kwargs,
         )
         self.modified = 0
