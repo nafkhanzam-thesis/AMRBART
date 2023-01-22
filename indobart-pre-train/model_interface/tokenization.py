@@ -47,6 +47,13 @@ class AMRTokenizer(TargetTokenizer):
         )
         self.remove_pars = False
 
+        #~ Compatibilities from AMRBartTokenizer
+        self.byte_encoder = bytes_to_unicode()
+        self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
+        self.encoder = {}
+        self.decoder = {v: k for k, v in self.encoder.items()}
+        #~
+
     @classmethod
     def from_pretrained(cls, pretrained_model_path, *args, **kwargs):
         inst = super().from_pretrained(pretrained_model_path, *args, **kwargs)
@@ -54,6 +61,15 @@ class AMRTokenizer(TargetTokenizer):
         return inst
 
     def init_amr_vocabulary(self):
+        #~ Compatibilities from AMRBartTokenizer
+        vocab = super().get_vocab()
+        tokens = [t for t in raw_special_tokens if t not in vocab]
+        super()._add_tokens(tokens)
+        self.modified = len(tokens)
+        self.encoder = super().get_vocab()
+        self.decoder = {v: k for k, v in self.encoder.items()}
+        #~
+
         self.old_enc_size = old_enc_size = len(self.encoder)
         tokens = [t for t in raw_special_tokens if t not in self.encoder]
 
