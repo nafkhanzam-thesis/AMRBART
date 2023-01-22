@@ -11,7 +11,7 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 def ids_to_clean_text(tokenizer, generated_ids):
-    gen_text = tokenizer.batch_decode(generated_ids)
+    gen_text = tokenizer.batch_decode(generated_ids, clean_up_tokenization_spaces=False)
     return gen_text
 
 
