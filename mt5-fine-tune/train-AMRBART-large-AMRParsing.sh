@@ -56,7 +56,7 @@ python -u main.py \
     --optim "adamw_hf" \
     --lr_scheduler_type "polynomial" \
     --warmup_steps 200 \
-    --num_train_epochs 30 \
+    --num_train_epochs 1 \
     --early_stopping 10 \
     --max_source_length 400 \
     --max_target_length 1024 \
@@ -67,7 +67,7 @@ python -u main.py \
     --evaluation_strategy "epoch" \
     --weight_decay 0.01 \
     --max_grad_norm 0 \
-    --max_steps -1 \
+    --max_steps 100000 \
     --predict_with_generate \
     --smart_init False \
     --use_fast_tokenizer False \
