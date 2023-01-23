@@ -13,7 +13,7 @@ from common.utils import shift_tokens_right
 def padding_func(features, padding_side="right", pad_token_id=1, key="label", pad_to_multiple_of=1, max_length=None):
     assert key in features[0].keys(), f"{key} not in {features[0].keys()}"
     max_label_length = max(len(feature[key]) for feature in features)
-    if pad_to_multiple_of > 1:
+    if pad_to_multiple_of is not None and pad_to_multiple_of > 1:
         if max_length is not None:
             max_label_length = min(max_length,
                 (max_label_length + pad_to_multiple_of - 1) // pad_to_multiple_of * pad_to_multiple_of

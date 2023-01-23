@@ -1,15 +1,16 @@
 export CUDA_VISIBLE_DEVICES=0
 RootDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-Dataset=LDC2020
-#Dataset=LDC2017
+# Dataset=LDC2020
+# Dataset=LDC2017
+Dataset=amrbart
 
-BasePath=/mnt/nfs-storage/data        # change dir here
-DataPath=$RootDir/data/$Dataset
+BasePath=.        # change dir here
+DataPath=$RootDir/../datasets/$Dataset
 
-ModelCate=AMRBART-large
+ModelCate=mt5-small
 
-MODEL=$1
+MODEL="../models/pre-trained-amrbart-old-100000"
 ModelCache=$BasePath/.cache
 DataCache=$DataPath/.cache/dump-amrparsing
 
@@ -44,7 +45,7 @@ python -u main.py \
     --output_dir $OutputDir \
     --cache_dir $ModelCache \
     --data_cache_dir $DataCache \
-    --tokenizer_name "facebook/bart-large" \
+    --tokenizer_name $MODEL \
     --model_name_or_path $MODEL \
     --overwrite_output_dir \
     --unified_input True \
