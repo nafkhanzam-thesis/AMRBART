@@ -49,14 +49,14 @@ python -u main.py \
     --model_name_or_path $MODEL \
     --overwrite_output_dir \
     --unified_input True \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 8 \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --learning_rate $lr \
     --optim "adamw_hf" \
     --lr_scheduler_type "polynomial" \
     --warmup_steps 200 \
-    --num_train_epochs 30 \
+    --num_train_epochs 1000 \
     --early_stopping 10 \
     --max_source_length 400 \
     --max_target_length 1024 \
@@ -73,14 +73,14 @@ python -u main.py \
     --use_fast_tokenizer False \
     --logging_dir $OutputDir/logs \
     --logging_first_step True \
-    --logging_steps 20 \
+    --logging_steps 1000 \
     --save_strategy "epoch" \
     --save_total_limit 1 \
     --seed 42 \
     --fp16 \
     --fp16_backend "auto" \
-    --dataloader_num_workers 8 \
-    --eval_dataloader_num_workers 2 \
+    --dataloader_num_workers 1 \
+    --eval_dataloader_num_workers 1 \
     --load_best_model_at_end True \
     --metric_for_best_model "eval_smatch" \
     --include_inputs_for_metrics \
