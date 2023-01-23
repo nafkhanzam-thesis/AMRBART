@@ -79,7 +79,7 @@ class AMRParsingDataSet(Dataset):
             txt, max_length=self.max_src_length, padding=False, truncation=True
         )["input_ids"]
         if self.unified_input:
-            txt_ids = [itm[:self.max_src_length-3] + [self.tokenizer.amr_bos_token_id, self.tokenizer.mask_token_id, self.tokenizer.amr_eos_token_id] for itm in raw_txt_ids]
+            txt_ids = [itm[:self.max_src_length-3] + [self.tokenizer.amr_bos_token_id, self.tokenizer.get_mask_token_id(1), self.tokenizer.amr_eos_token_id] for itm in raw_txt_ids]
         else:
             txt_ids = raw_txt_ids
         return {
@@ -207,7 +207,7 @@ class AMR2TextDataSet(Dataset):
             src_ids = [[self.tokenizer.amr_bos_token_id] + self.tokenizer.tokenize_amr(itm.split())[:self.max_src_length - 2] + [self.tokenizer.amr_eos_token_id] for itm in src]
         else:
             # [<s>[mask]</s><AMR>xxx</AMR>]
-            src_ids = [[self.tokenizer.bos_token_id, self.tokenizer.mask_token_id, self.tokenizer.eos_token_id] + [self.tokenizer.amr_bos_token_id] + self.tokenizer.tokenize_amr(itm.split())[:self.max_src_length -5] + [self.tokenizer.amr_eos_token_id] for itm in src]
+            src_ids = [[self.tokenizer.bos_token_id, self.tokenizer.get_mask_token_id(1), self.tokenizer.eos_token_id] + [self.tokenizer.amr_bos_token_id] + self.tokenizer.tokenize_amr(itm.split())[:self.max_src_length -5] + [self.tokenizer.amr_eos_token_id] for itm in src]
             
         with self.tokenizer.as_target_tokenizer():
             tgt_ids = self.tokenizer(
