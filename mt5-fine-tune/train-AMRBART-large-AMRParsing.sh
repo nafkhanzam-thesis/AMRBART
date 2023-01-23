@@ -56,7 +56,7 @@ python -u main.py \
     --optim "adamw_hf" \
     --lr_scheduler_type "polynomial" \
     --warmup_steps 200 \
-    --num_train_epochs 1000 \
+    --num_train_epochs 30 \
     --early_stopping 10 \
     --max_source_length 400 \
     --max_target_length 1024 \
@@ -73,7 +73,7 @@ python -u main.py \
     --use_fast_tokenizer False \
     --logging_dir $OutputDir/logs \
     --logging_first_step True \
-    --logging_steps 1000 \
+    --logging_steps 20 \
     --save_strategy "epoch" \
     --save_total_limit 1 \
     --seed 42 \

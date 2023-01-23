@@ -4,6 +4,7 @@ import json
 import math
 import numpy as np
 import torch
+import os
 from torch import nn
 from typing import Callable, Dict, Iterable, List, Tuple, Union, Any
 from torch.optim import Optimizer
@@ -79,6 +80,8 @@ def save_dummy_batch(args, input_ids, dec_inp_ids, labels, tokenizer, prefix="tr
         ith_tok_dict["label_tokens"] = ids_to_clean_text(tokenizer, labels[idx])
         ith_tok_dict["dec_inp_tokens"] = ids_to_clean_text(tokenizer, dec_inp_ids[idx])
         dummy_tokens.append(ith_tok_dict)
+
+    os.makedirs(args.output_dir, exist_ok=True)
 
     with open(
         args.output_dir + f"/dummy_{prefix}_ids.json", "w", encoding="utf-8"
